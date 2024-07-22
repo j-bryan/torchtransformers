@@ -1,0 +1,1 @@
+Implements a number of scikit-learn style transformers as PyTorch modules to allow differentiability across the transformations.
