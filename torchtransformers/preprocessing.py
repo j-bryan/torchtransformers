@@ -10,8 +10,8 @@ class StandardScaler(TransformerMixin):
     def __init__(self):
         super().__init__()
         # Default values result in no scaling
-        self.loc = 0.0
-        self.scale = 1.0
+        # self.register_buffer("loc", 0.0)
+        # self.register_buffer("scale", 1.0)
 
     def __repr__(self):
         return f"StandardScaler(loc={self.loc}, scale={self.scale})"
@@ -21,8 +21,10 @@ class StandardScaler(TransformerMixin):
         Calculates the mean and standard deviation of the values in the last dimension of the input tensor.
         """
         dims = tuple(range(x.dim() - 1))
-        self.loc = x.mean(dim=dims)
-        self.scale = x.std(dim=dims)
+        self.register_buffer("loc", x.mean(dim=dims))
+        self.register_buffer("scale", x.std(dim=dims))
+        # self.loc = x.mean(dim=dims)
+        # self.scale = x.std(dim=dims)
         self._is_fitted = True
         return self
 
@@ -39,8 +41,8 @@ class MinMaxScaler(TransformerMixin):
     def __init__(self):
         super().__init__()
         # Default values result in no scaling
-        self.loc = 0.0
-        self.scale = 1.0
+        # self.register_buffer("loc", 0.0)
+        # self.register_buffer("scale", 1.0)
 
     def __repr__(self):
         return f"MinMaxScaler(loc={self.loc}, scale={self.scale})"
@@ -49,8 +51,10 @@ class MinMaxScaler(TransformerMixin):
         """
         Calculates the minimum and maximum of the values in the last dimension of the input tensor.
         """
-        self.loc = x.min(dim=-2).values
-        self.scale = x.max(dim=-2).values - self.loc
+        self.register_buffer("loc", x.min(dim=-2).values)
+        self.register_buffer("scale", x.max(dim=-2).values - self.loc)
+        # self.loc = x.min(dim=-2).values
+        # self.scale = x.max(dim=-2).values - self.loc
         self._is_fitted = True
         return self
 
@@ -67,8 +71,8 @@ class RobustScaler(TransformerMixin):
     def __init__(self):
         super().__init__()
         # Default values result in no scaling
-        self.loc = 0.0
-        self.scale = 1.0
+        # self.register_buffer("loc", 0.0)
+        # self.register_buffer("scale", 1.0)
 
     def __repr__(self):
         return f"RobustScaler(loc={self.loc}, scale={self.scale})"
@@ -80,8 +84,10 @@ class RobustScaler(TransformerMixin):
         q1 = torch.quantile(x, 0.25, dim=-2)
         q2 = torch.quantile(x, 0.50, dim=-2)
         q3 = torch.quantile(x, 0.75, dim=-2)
-        self.loc = q2
-        self.scale = q3 - q1
+        self.register_buffer("loc", q2)
+        self.register_buffer("scale", q3 - q1)
+        # self.loc = q2
+        # self.scale = q3 - q1
         self._is_fitted = True
         return self
 
@@ -116,11 +122,9 @@ class Normalizer(TransformerMixin):
     def fit(self, x: torch.Tensor, y: torch.Tensor | None = None) -> "Normalizer":
         return self
 
-    @require_fitted
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.normalize(x, p=self.p, dim=-1)
 
-    @require_fitted
     def inverse_transform(self, x: torch.Tensor) -> torch.Tensor:
         # I don't think we'll actually need this
         raise NotImplementedError("Inverse transform not well-defined for normalization")
@@ -140,11 +144,9 @@ class FunctionTransformer(TransformerMixin):
     def fit(self, x: torch.Tensor, y: torch.Tensor | None = None) -> "FunctionTransformer":
         return self
 
-    @require_fitted
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.func(x)
 
-    @require_fitted
     def inverse_transform(self, x: torch.Tensor) -> torch.Tensor:
         return self.inverse_func(x)
 
@@ -162,10 +164,8 @@ class Clamp(TransformerMixin):
     def fit(self, x: torch.Tensor, y: torch.Tensor | None = None) -> "Clamp":
         return self
 
-    @require_fitted
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return torch.clamp(x, min=self.min_val, max=self.max_val)
 
-    @require_fitted
     def inverse_transform(self, x: torch.Tensor) -> torch.Tensor:
         return torch.clamp(x, min=self.min_val, max=self.max_val)

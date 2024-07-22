@@ -81,8 +81,8 @@ class TestStandardScaler:
 
         scaler.fit(x)
 
-        assert torch.allclose(scaler.mean, torch.tensor([2.0, 3.0]))
-        assert torch.allclose(scaler.std, torch.tensor([2.0, 2.0]) ** 0.5)
+        assert torch.allclose(scaler.loc, torch.tensor([2.0, 3.0]))
+        assert torch.allclose(scaler.scale, torch.tensor([2.0, 2.0]) ** 0.5)
 
     def test_standard_scaler_fit_3d(self, setup_standard_scaler, setup_3d_data):
         scaler = setup_standard_scaler
@@ -90,8 +90,8 @@ class TestStandardScaler:
 
         scaler.fit(x)
 
-        assert torch.allclose(scaler.mean, torch.tensor([2.0, 3.0]))
-        assert torch.allclose(scaler.std, torch.tensor([2.0, 2.0]) ** 0.5)
+        assert torch.allclose(scaler.loc, torch.tensor([2.0, 3.0]))
+        assert torch.allclose(scaler.scale, torch.tensor([2.0, 2.0]) ** 0.5)
 
     def test_standard_scaler_forward(self, setup_standard_scaler, setup_2d_data):
         scaler = setup_standard_scaler
@@ -133,8 +133,8 @@ class TestMinMaxScaler:
 
         scaler.fit(x)
 
-        assert torch.allclose(scaler.min, torch.tensor([1.0, 2.0]))
-        assert torch.allclose(scaler.max, torch.tensor([3.0, 4.0]))
+        assert torch.allclose(scaler.loc, torch.tensor([1.0, 2.0]))
+        assert torch.allclose(scaler.scale, torch.tensor([2.0, 2.0]))
 
     def test_min_max_scaler_fit_3d(self, setup_min_max_scaler, setup_3d_data):
         scaler = setup_min_max_scaler
@@ -142,8 +142,8 @@ class TestMinMaxScaler:
 
         scaler.fit(x)
 
-        assert torch.allclose(scaler.min, torch.tensor([1.0, 2.0]))
-        assert torch.allclose(scaler.max, torch.tensor([3.0, 4.0]))
+        assert torch.allclose(scaler.loc, torch.tensor([1.0, 2.0]))
+        assert torch.allclose(scaler.scale, torch.tensor([2.0, 2.0]))
 
     def test_min_max_scaler_forward(self, setup_min_max_scaler, setup_2d_data):
         scaler = setup_min_max_scaler
