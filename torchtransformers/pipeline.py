@@ -1,6 +1,6 @@
 import torch
 
-from torchtransformers.base import BaseEstimator, TransformerMixin
+from torchtransformers.base import BaseEstimator, TransformerMixin, require_fitted
 
 
 __all__ = ["Pipeline"]
@@ -28,8 +28,10 @@ class Pipeline(BaseEstimator, TransformerMixin):
         for step in self.model[:-1]:
             xt = step.fit_transform(xt, yt)
         self.model[-1].fit(xt, yt)
+        self._is_fitted = True
         return self
 
+    @require_fitted
     def inverse_transform(self, x: torch.Tensor) -> torch.Tensor:
         xt = x.clone()
         for step in reversed(self.model):
@@ -38,6 +40,7 @@ class Pipeline(BaseEstimator, TransformerMixin):
             xt = step.inverse_transform(xt)
         return xt
 
+    @require_fitted
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
 

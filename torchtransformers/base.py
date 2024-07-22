@@ -7,7 +7,7 @@ __all__ = ["TransformerMixin"]
 def require_fitted(func):
     def wrapper(self, *args, **kwargs):
         if not self._is_fitted:
-            raise ValueError("Transformer not fitted yet")
+            raise ValueError(f"Transformer {self.__class__.__name__} not fitted yet")
         return func(self, *args, **kwargs)
 
     return wrapper

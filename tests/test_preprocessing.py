@@ -1,9 +1,5 @@
 import pytest
-import os
-import copy
-import pickle
 import torch
-from torch.nn import Module
 
 from torchtransformers.preprocessing import *
 
@@ -125,6 +121,28 @@ class TestStandardScaler:
         for k in scaler.state_dict().keys():
             assert torch.allclose(scaler.state_dict()[k], scaler2.state_dict()[k])
 
+    def test_device(self, setup_standard_scaler, setup_2d_data):
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            # Skip the test if no GPU or MPS is available
+            pytest.skip("No GPU or MPS available")
+
+        scaler = setup_standard_scaler
+        x = setup_2d_data
+
+        scaler = scaler.fit(x)
+
+        assert scaler.loc.device.type == "cpu"
+        assert scaler.scale.device.type == "cpu"
+
+        scaler.to(device)
+
+        assert scaler.loc.device.type == device
+        assert scaler.scale.device.type == device
+
 
 class TestMinMaxScaler:
     def test_min_max_scaler_fit_2d(self, setup_min_max_scaler, setup_2d_data):
@@ -176,6 +194,28 @@ class TestMinMaxScaler:
         assert torch.allclose(scaler.transform(x), scaler2.transform(x))
         for k in scaler.state_dict().keys():
             assert torch.allclose(scaler.state_dict()[k], scaler2.state_dict()[k])
+
+    def test_device(self, setup_min_max_scaler, setup_2d_data):
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            # Skip the test if no GPU or MPS is available
+            pytest.skip("No GPU or MPS available")
+
+        scaler = setup_min_max_scaler
+        x = setup_2d_data
+
+        scaler = scaler.fit(x)
+
+        assert scaler.loc.device.type == "cpu"
+        assert scaler.scale.device.type == "cpu"
+
+        scaler.to(device)
+
+        assert scaler.loc.device.type == device
+        assert scaler.scale.device.type == device
 
 
 class TestRobustScaler:
@@ -232,6 +272,28 @@ class TestRobustScaler:
         assert torch.allclose(scaler.transform(x), scaler2.transform(x))
         for k in scaler.state_dict().keys():
             assert torch.allclose(scaler.state_dict()[k], scaler2.state_dict()[k])
+
+    def test_device(self, setup_robust_scaler, setup_2d_data):
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            # Skip the test if no GPU or MPS is available
+            pytest.skip("No GPU or MPS available")
+
+        scaler = setup_robust_scaler
+        x = setup_2d_data
+
+        scaler = scaler.fit(x)
+
+        assert scaler.loc.device.type == "cpu"
+        assert scaler.scale.device.type == "cpu"
+
+        scaler.to(device)
+
+        assert scaler.loc.device.type == device
+        assert scaler.scale.device.type == device
 
 
 class TestNormalizer:

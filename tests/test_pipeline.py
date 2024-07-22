@@ -50,6 +50,7 @@ def test_inverse_transform(setup_pipeline):
     # pipelines, particularly if there's a regression model at the end.
     pipeline = setup_pipeline
     x = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+    pipeline.fit(x)
     transformed = pipeline.forward(x)
 
     inverse_transformed = pipeline.inverse_transform(transformed)

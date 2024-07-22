@@ -1,6 +1,6 @@
 import torch
 
-from torchtransformers.base import TransformerMixin, BaseEstimator
+from torchtransformers.base import TransformerMixin, BaseEstimator, require_fitted
 
 
 __all__ = ["ColumnTransformer", "TransformedTargetRegressor"]
@@ -9,38 +9,40 @@ __all__ = ["ColumnTransformer", "TransformedTargetRegressor"]
 class ColumnTransformer(TransformerMixin):
     def __init__(self, transformers: list[tuple[str, TransformerMixin, list[int]]], remainder="passthrough"):
         super().__init__()
-        self.transformers = transformers
+        self.transformers = torch.nn.ModuleDict({name: transformer for name, transformer, _ in transformers})
+        self.cols = {name: cols for name, _, cols in transformers}
         self.remainder = remainder  # Not used
 
     def __repr__(self):
         s = "ColumnTransformer(transformers=[\n"
-        for name, transformer, cols in self.transformers:
-            s += f"\t{name}: {transformer}, cols={cols}\n"
+        for name, transformer in self.transformers.items():
+            s += f"\t{name}: {transformer}, cols={self.cols[name]}\n"
         s += "])\n"
         return s
 
     def fit(self, x: torch.Tensor, y: torch.Tensor | None = None) -> "ColumnTransformer":
-        # for name, transformer, cols in self.transformers:
-        #     print("ColumnTransformer.fit", name, cols, x[..., cols].shape)
-        #     x[..., cols] = transformer.fit_transform(x[..., cols])
+        xt = x.clone()
+        yt = y.clone() if y is not None else None
+        for name, transformer in self.transformers.items():
+            cols = self.cols[name]
+            xt[..., cols] = transformer.fit_transform(xt[..., cols], yt)
         self._is_fitted = True
         return self
 
+    @require_fitted
     def forward(self, x: torch.Tensor, y: torch.Tensor | None = None) -> torch.Tensor:
         xt = x.clone()
-        yt = y.clone() if y is not None else None
-        for name, transformer, cols in self.transformers:
-            if not transformer._is_fitted:
-                xt[..., cols] = transformer.fit_transform(xt[..., cols], yt)
-            else:
-                xt[..., cols] = transformer(xt[..., cols])
+        for name, transformer in self.transformers.items():
+            cols = self.cols[name]
+            xt[..., cols] = transformer(xt[..., cols])
         return xt
 
+    @require_fitted
     def inverse_transform(self, x: torch.Tensor, y: torch.Tensor | None = None) -> torch.Tensor:
         xt = x.clone()
-        yt = y.clone() if y is not None else None
-        for name, transformer, cols in self.transformers:
-            xt[..., cols] = transformer.inverse_transform(xt[..., cols], yt)
+        for name, transformer in self.transformers.items():
+            cols = self.cols[name]
+            xt[..., cols] = transformer.inverse_transform(xt[..., cols])
         return xt
 
 
@@ -56,8 +58,10 @@ class TransformedTargetRegressor(TransformerMixin, BaseEstimator):
     def fit(self, x: torch.Tensor, y: torch.Tensor) -> "TransformedTargetRegressor":
         yt = self.transformer.fit_transform(y)
         self.regressor.fit(x, yt)
+        self._is_fitted = True
         return self
 
+    @require_fitted
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.transformer.inverse_transform(self.regressor(x))
 
