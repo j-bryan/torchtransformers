@@ -123,7 +123,9 @@ class Normalizer(TransformerMixin):
         return self
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.nn.functional.normalize(x, p=self.p, dim=-1)
+        xt = x.clone()
+        xt = xt / xt.norm(p=self.p, dim=-1, keepdim=True).clamp_min(1e-12).expand_as(xt)
+        return xt
 
     def inverse_transform(self, x: torch.Tensor) -> torch.Tensor:
         # I don't think we'll actually need this
